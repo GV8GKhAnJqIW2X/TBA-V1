@@ -14,9 +14,7 @@ import numpy as np
 import asyncio
 
 async def main():
-    traces = []
-
-    for symbol in (await g_symbols_f(settings_ml["klines_all"]))[:30]:
+    for symbol in (await g_symbols_f(settings_ml["klines_all"])):
         print(symbol)
         data = await g_df_test(
             data=await g_df_pack(
@@ -30,16 +28,20 @@ async def main():
             settings_bt=settings_bt,
             settings_ml=settings_ml,
         )
-        if data:
-            traces.append(dict(
-                x=np.arange(settings_ml["klines_train_used"], settings_ml["klines_all"]),
-                y=data["BT/ balance"].dropna(),
+        if data is not None:
+            s_df_dump(
+                data=dict(
+                    x=np.arange(settings_ml["klines_train_used"], settings_ml["klines_all"]),
+                    y=data["BT/ balance"].dropna(),
+                    name=symbol,
+                    line=dict(color="random", color_random_defolt=[228]),
+                ),
                 name=symbol,
-                line=dict(color="random", color_random_defolt=[228]),
-            ))
+                dir="traces_pack",
+            )
             s_df_dump(data=data, name=symbol)
 
-    g_visualize(traces=traces)
+    g_visualize(traces=[g_df_load(name=name, dir="traces_pack") for name in g_files_list(dir="traces_pack")])
     print(g_report_balance(files_list=g_files_list(), load_func=g_df_load))
 
 if __name__ == "__main__":
