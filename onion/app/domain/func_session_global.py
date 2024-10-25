@@ -12,21 +12,24 @@ async def g_klines(
     qty,
     interval=1,
     float_=True,
-):
-    start = time() * 1000
-    limits = np.append(np.full(qty // 1000, 1000), qty % 1000)
-    data = np.concatenate(await aio_gather(*(
-        aio_to_thread(lambda i=i: session_.get_kline(
-            category="linear",
-            symbol=symbol,
-            interval=interval,
-            limit=limits[i],
-            end=str(int(start - (i * 60_000_000)))
-        )["result"]["list"])
-        for i in range(len(limits))
-        if limits[i] > 0
-    )))[::-1]
-    return np.float64(data) if float_ else data
+):  
+    try:
+        start = time() * 1000
+        limits = np.append(np.full(qty // 1000, 1000), qty % 1000)
+        data = np.concatenate(await aio_gather(*(
+            aio_to_thread(lambda i=i: session_.get_kline(
+                category="linear",
+                symbol=symbol,
+                interval=interval,
+                limit=limits[i],
+                end=str(int(start - (i * 60_000_000)))
+            )["result"]["list"])
+            for i in range(len(limits))
+            if limits[i] > 0
+        )))[::-1]
+        return np.float64(data) if float_ else data
+    except:
+        return None
 
 async def g_symbols_f(
     klines_all,

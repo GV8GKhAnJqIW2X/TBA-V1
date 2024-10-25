@@ -1,7 +1,7 @@
 import plotly.graph_objects as go
 from itertools import count
-import numpy as np
 from random import randint
+import pandas as pd
 
 def g_print_load(
     full_load,
@@ -19,13 +19,12 @@ def g_print_load(
         return wrapper
     return dcrtr
 
-def g_report(arrs_balance, arr_symbols):
-    arr_balance = [arr.iloc[-1] for arr in arrs_balance]
-    print(
-        f"\nmean balance: {np.mean(arr_balance)}\n"
-        f"min_balance: {np.min(arr_balance)}, symbol: {arr_symbols[np.argmin(arr_balance)]}\n"
-        f"max_balance: {np.max(arr_balance)}, symbol: {arr_symbols[np.argmax(arr_balance)]}\n"
-    )
+def g_report_balance(files_list, load_func):
+    balance = {}
+    for symbol in files_list:
+        data = load_func(symbol)
+        balance[symbol] = data["BT/ balance"].dropna()
+    return pd.DataFrame(balance).iloc[-1].describe()
 
 def g_visualize(
     markers=(),

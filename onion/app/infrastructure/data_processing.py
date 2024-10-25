@@ -4,11 +4,13 @@ import pandas as pd
 import pickle
 
 def g_klines_splitting(klines):
-    return pd.DataFrame({
-        'close': klines[:, 4],
-        'high': klines[:, 2],
-        'low': klines[:, 3],
-    })
+    if klines is not None:
+        return pd.DataFrame({
+            'close': klines[:, 4],
+            'high': klines[:, 2],
+            'low': klines[:, 3],
+        })
+    return False
 
 def g_rolling_apply(
     arr, 
@@ -59,3 +61,7 @@ def g_df_load(
 ):
     with open(f"{dir}/{name}.pickle", "rb") as f:
         return pickle.load(f)
+
+def g_files_list(dir="data_pack", suffix_del=".pickle"):
+    return [file.rstrip(suffix_del) for file in os.listdir(dir)]
+

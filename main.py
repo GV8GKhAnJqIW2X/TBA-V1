@@ -4,17 +4,19 @@ from onion.app.infrastructure.data_processing import (
     g_klines_splitting, 
     s_df_dump, 
     g_df_load,
+    g_files_list,
 )
 from onion.app.infrastructure.g_df_pack import g_df_pack
 from onion.app.infrastructure.g_df_test import g_df_test
-from onion.visual.visual import g_visualize
+from onion.visual.visual import g_visualize, g_report_balance
 
+import numpy as np
 import asyncio
 
 async def main():
     traces = []
 
-    for symbol in await g_symbols_f(settings_ml["klines_all"]):
+    for symbol in (await g_symbols_f(settings_ml["klines_all"]))[:30]:
         print(symbol)
         data = await g_df_test(
             data=await g_df_pack(
@@ -28,40 +30,19 @@ async def main():
             settings_bt=settings_bt,
             settings_ml=settings_ml,
         )
-        traces.append(dict(
-            x=range(settings_ml["klines_train_used"], settings_ml["klines_all"]),
-            y=data["BT/ balance"],
-            name=symbol,
-            line=dict(
-                color="random", 
-                theme="dark", 
-                color_random_defolt=[228],
-            )
-        ))
-        s_df_dump(data=data, name=symbol)
+        if data:
+            traces.append(dict(
+                x=np.arange(settings_ml["klines_train_used"], settings_ml["klines_all"]),
+                y=data["BT/ balance"].dropna(),
+                name=symbol,
+                line=dict(color="random", color_random_defolt=[228]),
+            ))
+            s_df_dump(data=data, name=symbol)
 
     g_visualize(traces=traces)
-    # data_need = g_df_load(name="10000000AIDOGEUSDT")
-    # g_visualize(
-    #     traces=(dict(x=data_need.index, y=data_need["close"], name="coin", line=dict(color="random", color_random_defolt=[])),),
-    #     markers=(data_need["predicted_label"],),
-    #     markers_settings=(
-    #         (
-    #             dict(
-    #                 class_=-1,
-    #                 color="red",
-    #                 name="sell",
-    #                 trace_index=0
-    #             ),
-    #             dict(
-    #                 class_=1,
-    #                 color="green",
-    #                 name="buy",
-    #                 trace_index=0
-    #             ),
-    #         ),
-    #     ),
-    # )
+    print(g_report_balance(files_list=g_files_list(), load_func=g_df_load))
 
 if __name__ == "__main__":
     asyncio.run(main())
+
+# покрыть все тестами и обработчиками ошибок 

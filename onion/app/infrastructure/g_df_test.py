@@ -96,54 +96,56 @@ async def g_df_test(
         price_open_avg = price_last
         qty = balance * settings_bt["balance_sttngs"]["used"]
 
-    data[["BT", "BT/ balance"]] = np.nan
+    if data is not None:
+        data[["BT", "BT/ balance"]] = np.nan
 
-    (
-        in_position,
-        side_pos,
-        price_open_avg,
-        qty,
-        balance,
-    ) = g_zeroing_out(add=(settings_bt["balance_sttngs"]["balance"],))
+        (
+            in_position,
+            side_pos,
+            price_open_avg,
+            qty,
+            balance,
+        ) = g_zeroing_out(add=(settings_bt["balance_sttngs"]["balance"],))
 
-    for i, el in (
-        lambda start_=settings_ml["klines_train_used"]: enumerate(
-            data[["close", "predicted_label"]].iloc[start_:].values,
-            start=start_
-        )
-    )():
-        price_last, side_predict = el
-        data.loc[i, "BT/ balance"] = balance
+        for i, el in (
+            lambda start_=settings_ml["klines_train_used"]: enumerate(
+                data[["close", "predicted_label"]].iloc[start_:].values,
+                start=start_
+            )
+        )():
+            price_last, side_predict = el
+            data.loc[i, "BT/ balance"] = balance
 
-        if in_position:
-            pnl_percent = price_open_avg / price_last - 1
-            {
-                # sl module
-                (
-                    qty >= (balance * settings_bt["sl"]) and
-                    pnl_percent * settings_bt["leverage"] <= (-1)
-                ): g_sl_module,
+            if in_position:
+                pnl_percent = price_open_avg / price_last - 1
+                {
+                    # sl module
+                    (
+                        qty >= (balance * settings_bt["sl"]) and
+                        pnl_percent * settings_bt["leverage"] <= (-1)
+                    ): g_sl_module,
 
-                # tp module
-                all((abs(pnl_percent) >= settings_bt["tp"], (
-                    (pnl_percent > 0 > side_pos) or
-                    (side_pos > 0 > pnl_percent)
-                ))): g_tp_module,
+                    # tp module
+                    all((abs(pnl_percent) >= settings_bt["tp"], (
+                        (pnl_percent > 0 > side_pos) or
+                        (side_pos > 0 > pnl_percent)
+                    ))): g_tp_module,
 
-                # avg module
-                (
-                    side_predict != 0 and
-                    not np.isnan(side_predict) and
-                    qty < balance * settings_bt["sl"]
-                ): g_avg_module,
+                    # avg module
+                    (
+                        side_predict != 0 and
+                        not np.isnan(side_predict) and
+                        qty < balance * settings_bt["sl"]
+                    ): g_avg_module,
 
-                # close module
-                qty <= 0: g_close_module,
-            }.get(True, lambda: 0)()
-        elif (
-            side_predict and
-            not np.isnan(side_predict)
-        ):
-            g_open_module()
-    
-    return data
+                    # close module
+                    qty <= 0: g_close_module,
+                }.get(True, lambda: 0)()
+            elif (
+                side_predict and
+                not np.isnan(side_predict)
+            ):
+                g_open_module()
+        
+        return data
+    return False
