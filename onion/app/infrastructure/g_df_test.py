@@ -148,4 +148,4 @@ async def g_df_test(
                 g_open_module()
         
         return data
-    return False
+    return None

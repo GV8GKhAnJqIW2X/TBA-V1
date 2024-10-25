@@ -10,7 +10,7 @@ def g_klines_splitting(klines):
             'high': klines[:, 2],
             'low': klines[:, 3],
         })
-    return False
+    return None
 
 def g_rolling_apply(
     arr, 
