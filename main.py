@@ -1,40 +1,67 @@
-from onion.app.domain.g_.global_ import g_symbols_f
-from onion.domain.g_settings_bt import settings_
-from onion.infrastructure.cycle_test_async import cycle_tests
-from onion.infrastructure.visual import g_report, g_visualize
-from onion.app.domain.g_.global_ import g_symbols_f
+from onion.app.domain.g_settings_bt import settings_bt, settings_ml
+from onion.app.domain.func_session_global import g_symbols_f, g_klines
+from onion.app.infrastructure.data_processing import (
+    g_klines_splitting, 
+    s_df_dump, 
+    g_df_load,
+)
+from onion.app.infrastructure.g_df_pack import g_df_pack
+from onion.app.infrastructure.g_df_test import g_df_test
+from onion.visual.visual import g_visualize
 
-import numpy as np
 import asyncio
-import pickle
-import pandas as pd
-import os
 
 async def main():
+    traces = []
 
-    await cycle_tests(["SUIUSDT", "ETHUSDT"])
-    
-    # func
-    data_pack = {}
-    dir = "data_pack"
-    for file in os.listdir(dir):
-        with open(f"{dir}/{file}", "rb") as f:
-            data_pack[file.rstrip(".pickle")] = pickle.load(f)
-            print(data_pack[file.rstrip(".pickle")].iloc[180_000:190_000]["BT/ balance"])
-    
-    # настроить получение данных отдельно из каждого файла и отображение на графике
-    from random import randint
-    g_visualize(
-        traces=tuple(
-            dict(
-                x=np.arange(data_pack[symbol]["BT/ balance"].count()),
-                y=data_pack[symbol]["BT/ balance"].dropna(),
-                name=symbol,
-                line=dict(color=f"rgb{tuple([228] + [randint(58, 159) for _ in range(2)])}"),
-            )
-            for symbol in data_pack
+    for symbol in await g_symbols_f(settings_ml["klines_all"]):
+        print(symbol)
+        data = await g_df_test(
+            data=await g_df_pack(
+                data=g_klines_splitting(await g_klines(
+                    symbol=symbol,
+                    float_=True,
+                    qty=settings_ml["klines_all"],
+                )),
+                settings_ml=settings_ml,
+            ),  
+            settings_bt=settings_bt,
+            settings_ml=settings_ml,
         )
-    )
+        traces.append(dict(
+            x=range(settings_ml["klines_train_used"], settings_ml["klines_all"]),
+            y=data["BT/ balance"],
+            name=symbol,
+            line=dict(
+                color="random", 
+                theme="dark", 
+                color_random_defolt=[228],
+            )
+        ))
+        s_df_dump(data=data, name=symbol)
+
+    g_visualize(traces=traces)
+    # data_need = g_df_load(name="10000000AIDOGEUSDT")
+    # g_visualize(
+    #     traces=(dict(x=data_need.index, y=data_need["close"], name="coin", line=dict(color="random", color_random_defolt=[])),),
+    #     markers=(data_need["predicted_label"],),
+    #     markers_settings=(
+    #         (
+    #             dict(
+    #                 class_=-1,
+    #                 color="red",
+    #                 name="sell",
+    #                 trace_index=0
+    #             ),
+    #             dict(
+    #                 class_=1,
+    #                 color="green",
+    #                 name="buy",
+    #                 trace_index=0
+    #             ),
+    #         ),
+    #     ),
+    # )
 
 if __name__ == "__main__":
     asyncio.run(main())
