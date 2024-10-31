@@ -1,50 +1,57 @@
-from onion.app.domain.g_settings_bt import settings_bt, settings_ml
-from onion.app.domain.func_session_global import g_symbols_f, g_klines
-from onion.app.infrastructure.data_processing import (
-    g_klines_splitting, 
-    s_df_dump, 
-    g_df_load,
-    g_files_list,
-)
-from onion.app.infrastructure.g_df_pack import g_df_pack
-from onion.app.infrastructure.g_df_test import g_df_test
-from onion.visual.visual import g_visualize, g_report_balance
+from onion.l1.g_settings import settings_ml, settings_bt
+from onion.l2.g_data_api_global import g_symbols_f, g_klines
+from onion.l2.g_filemanager_pickle import g_files_list, s_data_dump, g_data_load, g_data_loads
+from onion.l3.g_data_test import g_data_test
+from onion.l4.g_data_backtest import g_data_backtest
+from onion.l5.g_data_pack import g_data_mark, g_data_trace
+from onion.l6.g_report_gui import g_report_plotly
 
-import numpy as np
 import asyncio
+from random import randint
+from pprint import pprint
 
 async def main():
-    for symbol in (await g_symbols_f(settings_ml["klines_all"])):
-        print(symbol)
-        data = await g_df_test(
-            data=await g_df_pack(
-                data=g_klines_splitting(await g_klines(
-                    symbol=symbol,
-                    float_=True,
-                    qty=settings_ml["klines_all"],
-                )),
-                settings_ml=settings_ml,
-            ),  
-            settings_bt=settings_bt,
-            settings_ml=settings_ml,
-        )
-        if data is not None:
-            s_df_dump(
-                data=dict(
-                    x=np.arange(settings_ml["klines_train_used"], settings_ml["klines_all"]),
-                    y=data["BT/ balance"].dropna(),
-                    name=symbol,
-                    line=dict(color="random", color_random_defolt=[228]),
-                ),
-                name=symbol,
-                dir="traces_pack",
+    for symbol in\
+        await g_files_list():
+        # ["SUIUSDT", "ETHUSDT"]:
+        # await g_symbols_f(**settings_ml):
+        # data = await g_data_test(
+        #     klines=await g_klines(symbol=symbol, qty=settings_ml["klines_all_num"]),
+        #     ml_sett=settings_ml,
+        #     indcs_list=list(settings_ml["l1_indcs_train_sett"].keys()) + list(settings_ml["l2_indcs_train_sett"])
+        # )
+        # data = await g_data_backtest(data=data)
+        data = await g_data_load(name=f"data_pack/data_backtest/{symbol}")
+        await asyncio.gather(
+            s_data_dump(data=data, name=f"{symbol}"),
+            
+            # trace balance
+            s_data_dump(
+                data=await g_data_trace(
+                    y=data["BT/ balance"], 
+                    name_trace=symbol,
+                    color_rgb=tuple([randint(0, 255)] * 3)
+                ), 
+                name=f"{symbol}", 
+                dir="data_pack/trace_balance"
+            ),
+            
+            # test labels
+            s_data_dump(
+                data=await g_data_mark(
+                    y=data["close"],
+                    labels=data["test"],
+                    classes={
+                        1: {"color_rgb": (0, 255, 85), "name": "buy"},
+                        -1: {"color_rgb": (255, 0, 0), "name": "sell"},
+                    }
+                ), 
+                name=f"{symbol}", 
+                dir="data_pack/mark",
             )
-            s_df_dump(data=data, name=symbol)
-
-    g_visualize(traces=[g_df_load(name=name, dir="traces_pack") for name in g_files_list(dir="traces_pack")])
-    print(g_report_balance(files_list=g_files_list(), load_func=g_df_load))
+        )
+    
+    g_report_plotly(traces=await g_data_loads(dir="data_pack/trace_balance"))
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-# покрыть все тестами и обработчиками ошибок 
