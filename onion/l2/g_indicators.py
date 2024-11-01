@@ -1,4 +1,5 @@
 from onion.l1.s_logging import logger
+from onion.l1.g_settings import settings_ml
 
 import numpy as np
 import pandas as pd
@@ -82,9 +83,9 @@ def g_lorentzian_distances(feature_arrs,bars_back,):
 # @logger.catch
 async def g_data_x(
     data,
-    l1_indcs_train_sett,
-    l2_indcs_train_sett,
     indcs_list,
+    l1_indcs_train_sett=settings_ml["l1_indcs_train_sett"],
+    l2_indcs_train_sett=settings_ml["l2_indcs_train_sett"],
 ):
     async def g_clean_x(x):
         return pd.DataFrame(

@@ -1,5 +1,6 @@
 from onion.l1.s_logging import logger
 from onion.l1.g_settings import settings_ml
+from onion.l2.g_utils import g_rolling_apply
 
 from sklearn.neighbors import KNeighborsClassifier
 import numpy as np
@@ -32,6 +33,21 @@ async def g_y_train(
         ], axis=0)
     ), axis=0)
     return np.where(main_sell, -1, np.where(main_buy, 1, 0))
+
+async def g_y_test(
+    data, 
+    indcs_list, 
+    ml_sett=settings_ml,
+):
+    return await g_rolling_apply(
+        arr=data[indcs_list + ["train"]], 
+        window=ml_sett["klines_train_used_num"], 
+        func=lambda v: g_knn_predict(
+            x_train=v[indcs_list].iloc[:-1].values,
+            x_test=v[indcs_list].iloc[-1].values.reshape(1, 6),
+            y_train=v["train"].iloc[:-1].values,
+        )
+    )
 
 def g_knn_predict(
     x_train,

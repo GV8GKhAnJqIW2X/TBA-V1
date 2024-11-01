@@ -1,5 +1,6 @@
 from onion.l1.g_api_session import session_
 from onion.l1.s_logging import logger
+from onion.l1.g_settings import settings_ml
 
 from asyncio import (
     to_thread as aio_to_thread,
@@ -11,7 +12,7 @@ from time import time
 @logger.catch
 async def g_klines(
     symbol,
-    qty,
+    qty=settings_ml["klines_all_num"],
     interval=1,
     float_=True,
 ):  
@@ -32,7 +33,7 @@ async def g_klines(
 
 @logger.catch
 async def g_symbols_f(
-    klines_all_num,
+    klines_all_num=settings_ml["klines_all_num"],
     volume_24=200_000,
     index_volatility_24=0.9,
     deviations=0.05,
