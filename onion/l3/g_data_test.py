@@ -8,15 +8,10 @@ from pprint import pprint
 
 # @logger.catch
 async def g_data_test(
-    klines,
+    data,
     ml_sett,
     indcs_list,
 ):
-    data = pd.DataFrame({
-        "close": klines[:, 4],
-        "high": klines[:, 2],
-        "low": klines[:, 3],
-    })
     data = await g_data_x(
         data=data, 
         l1_indcs_train_sett=ml_sett["l1_indcs_train_sett"], 

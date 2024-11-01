@@ -37,7 +37,7 @@ def g_knn_predict(
     x_train,
     x_test,
     y_train,
-    n_neighbors=3
+    n_neighbors=settings_ml["n_neighbors"]
 ):
     return KNeighborsClassifier(n_neighbors=n_neighbors)\
         .fit(x_train, y_train)\
