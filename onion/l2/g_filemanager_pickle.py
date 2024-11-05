@@ -20,9 +20,9 @@ async def g_data_load(name,):
         return pickle.load(f)
 
 # @logger.catch
-async def g_files_list(dir="data_pack/data_backtest", suffix_del=".pickle"):
-    return [file.rstrip(suffix_del) for file in os.listdir(dir)]
+async def g_files_arr(dir="data_pack/data_backtest", suffix_del=".pickle"):
+    return frozenset([file.rstrip(suffix_del) for file in os.listdir(dir)])
 
 # @logger.catch
 async def g_data_loads(dir="data_pack"):
-    return [await g_data_load(name=f"{dir}/{file}") for file in await g_files_list(dir=dir)]
+    return [await g_data_load(name=f"{dir}/{file}") for file in await g_files_arr(dir=dir)]
