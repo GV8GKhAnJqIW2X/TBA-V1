@@ -1,12 +1,12 @@
 from onion.l1.s_logging import logger
-from onion.l1.g_settings import settings_ml
+from onion.l1.g_settings import settings_ml, settings_bt
 from onion.l2.g_utils import g_rolling_apply
 
 from sklearn.neighbors import KNeighborsClassifier
 import numpy as np
 
 # @logger.catch
-async def g_y_train(
+async def g_y_train_l1(
     data,
     feature_main=settings_ml["test_sett"]["feature_main"],
     feature_add=settings_ml["test_sett"]["feature_add"]
@@ -33,6 +33,32 @@ async def g_y_train(
         ], axis=0)
     ), axis=0)
     return np.where(main_sell, -1, np.where(main_buy, 1, 0))
+
+async def g_y_train_l2(data):
+    invert_func = lambda v1, v2, bool_: v1 >= v2 if bool_ else v1 <= v2
+    index_ = 0
+    side = 0
+    price_pos = 0
+    for i, el in enumerate(data[["train", "close"]].to_numpy()):
+        # print(el)
+        # print(data[["train", "close"]])
+        label, price = el
+        if label != 0:
+            if side == 0:
+                index_ = i
+                side = label
+                price_pos = price
+            elif side != label:
+                if not invert_func(
+                    price_pos * settings_bt["tp"] * side + price_pos, 
+                    price, 
+                    bool_=True if side == 1 else False
+                ):
+                    data.loc[index_, "train"] = 0
+                    side = 0
+                else:
+                    side = 0
+    return data["train"]
 
 async def g_y_test(
     data, 
