@@ -1,0 +1,33 @@
+{
+    "ML": {
+        "USE_dynamic_exits": true,
+        "neighbors_count": 5,
+        "y_train_bars_back": 4,
+        "bars_used": 3500,
+        "feature_used": {
+            "RSI": [[14], [9]],
+            "ADX": [[20]],
+            "CCI": [[20]],
+            "WT": [[15]]
+        }
+    },
+    "FILTER": {
+        "USE_volatility_f": true,
+        "USE_regime_f": true,
+        "USE_ADX_f": true,
+        "USE_EMA_f": true,
+        "USE_SMA_f": true,
+        "ADX": 20,
+        "EMA": 200,
+        "SMA": 200,
+        "regime": -0.1,
+        "KERNEL": {
+            "USE_KERNEL_f": true,
+            "USE_enhance_smoothing_lag": true,
+            "lookback_window": 8,
+            "relative_weight": 8,
+            "regression_level": 25,
+            "enhance_smoothing_lag": 2
+        }
+    }
+}
