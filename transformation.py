@@ -147,5 +147,5 @@ def g_crossover(series1, series2):
     crossover_condition = (series1 > series2) & (series1.shift(1) <= series2.shift(1))
     return crossover_condition
 
-def bars_since(series):
-    return series[::-1].cumsum().shift().fillna(0).astype(int)
+def g_bars_since(index_condition, index_now):
+    return abs(index_condition - index_now)

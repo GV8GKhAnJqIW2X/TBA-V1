@@ -33,6 +33,10 @@ async def main():
         signal=label_direction.neutral,
         bars_held=0,
     )
+    is_valid_short_exits = []
+    is_valid_long_exits = []
+    start_long_trades = []
+    start_short_trades = []
 
     start_iteration = bars_count.max_bars_back - (bars_count.bars_used * 2)
     for i, price in enumerate(src.close.iloc[start_iteration:], start=start_iteration,):
@@ -167,6 +171,11 @@ async def main():
         # Alert Variables
         alert_bullish = is_bullish_cross_alert if settings_filter["KERNEL"]["USE_enhance_smoothing_lag"] else is_bullish_change
         alert_bearish = is_bearish_cross_alert if settings_filter["KERNEL"]["USE_enhance_smoothing_lag"] else is_bearish_change
+        if alert_bullish:
+            i_alert_bullish = i
+        if alert_bearish:
+            i_alert_bearish = i
+
         # Bullish and Bearish Filters based on Kernel
         is_bullish = (is_bullish_smooth if settings_filter["KERNEL"]["USE_enhance_smoothing_lag"] else is_bullish_rate) if settings_filter["KERNEL"]["USE_KERNEL_f"] else True
         is_bearish = (is_bearish_smooth if settings_filter["KERNEL"]["USE_enhance_smoothing_lag"] else is_bearish_rate) if settings_filter["KERNEL"]["USE_KERNEL_f"] else True
@@ -174,9 +183,34 @@ async def main():
         # Entry Conditions: Booleans for ML Model Position Entries
         start_long_trade = is_new_buy_signal and is_bullish and is_EMA_up_trend and is_SMA_up_trend
         start_short_trade = is_new_sell_signal and is_bearish and is_EMA_down_trend and is_SMA_down_trend
+        if start_long_trade:
+            i_start_long_trade = i
+        if start_short_trade:
+            i_start_short_trade = i
+        start_long_trades.append(start_long_trade)
+        start_short_trades.append(start_short_trade)
 
         # Dynamic Exit Conditions: Booleans for ML Model Position Exits based on Fractal Filters and Kernel Regression Filters
-        
+        last_signal_was_bullish = g_bars_since(i_start_long_trade, i) < g_bars_since(i_start_short_trade, i)
+        last_signal_was_bearish = g_bars_since(i_start_short_trade, i) > g_bars_since(i_start_short_trade, i)
+        bars_since_red_entry = g_bars_since(i_start_short_trade, i)
+        bars_since_red_exit = g_bars_since(i_alert_bullish, i)
+        bars_since_green_entry = g_bars_since(start_long_trade, i)
+        bars_since_green_exit = g_bars_since(i_alert_bearish, i)
+        is_valid_short_exit = bars_since_green_exit > bars_since_red_entry
+        is_valid_long_exit = bars_since_red_exit > bars_since_green_entry
+        end_long_trade_dynamic = is_bearish_change and is_valid_long_exits[-2]
+        end_short_trade_dynamic = is_bullish_change and is_valid_short_exits[-2]
+        is_valid_long_exits.append(is_valid_long_exit)
+        is_valid_short_exits.append(is_valid_short_exit)
+
+        y_train_bars_back_a1_i = -(settings_ml["y_train_bars_back"] + 1)
+        # Fixed Exit Conditions: Booleans for ML Model Position Exits based on a Bar-Count Filters
+        end_long_trade_strict = ((is_held_less_than_n_bars and is_last_signal_buy) or (is_held_less_than_n_bars and is_new_sell_signal and is_last_signal_buy)) and start_long_trades[y_train_bars_back_a1_i]
+        end_short_trade_strict = ((is_held_less_than_n_bars and is_last_signal_sell) or (is_held_less_than_n_bars and is_new_buy_signal and is_last_signal_sell)) and start_short_trades[y_train_bars_back_a1_i]
+        is_dynamic_exit_valid = not settings_filter["USE_EMA_f"] and not settings_filter["USE_SMA_f"] and not settings_filter["KERNEL"]["USE_enhance_smoothing_lag"]
+        endLongTrade = settings_ml["USE_dynamic_exits"] and is_dynamic_exit_valid if end_long_trade_dynamic else end_long_trade_strict
+        endShortTrade = settings_ml["USE_dynamic_exits"] and is_dynamic_exit_valid if end_short_trade_dynamic else end_short_trade_strict
 
 # проверить работу функций:
 #   индикаторов
