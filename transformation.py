@@ -22,7 +22,9 @@ def g_m_imputer(data):
     )
 
 def g_f_volatility(
-    src, 
+    high, 
+    low, 
+    close,
     min_length=1, 
     max_length=10, 
     USE_volatility_f=settings_filter["USE_volatility_f"]
@@ -40,13 +42,20 @@ def g_f_volatility(
     """  
     if not USE_volatility_f:
         return True
-    
-    # Вычисляем недавний и исторический ATR
-    recent_atr = g_atr(high=src.high, low=src.low, close=src.close, period=min_length).iloc[-1]  # Последнее значение ATR за minLength
-    historical_atr = g_atr(high=src.high, low=src.low, close=src.close, period=max_length).iloc[-1]  # Последнее значение ATR за maxLength
-    
-    # Возвращаем результат фильтрации
-    return recent_atr > historical_atr
+        
+    return ta.volatility.AverageTrueRange(
+        high=high, 
+        low=low, 
+        close=close, 
+        window=min_length,
+    ).average_true_range().iloc[-1]\
+    > \
+    ta.volatility.AverageTrueRange(
+        high=high, 
+        low=low, 
+        close=close,
+        window=max_length,
+    ).average_true_range().iloc[-1]
 
 def g_f_adx(
     latest_adx, 
@@ -80,7 +89,6 @@ def g_f_regime(
     это связано с работой ema.
     
     """
-    
     if USE_regime_filter:
         len_src = len(high)
         values1 = np.zeros(len_src)

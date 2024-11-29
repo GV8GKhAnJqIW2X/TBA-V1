@@ -3,7 +3,7 @@
         "USE_dynamic_exits": false,
         "neighbors_count": 8,
         "max_bars_held": 4,
-        "bars_used": 3500,
+        "bars_used": 2000,
         "feature_used": {
             "RSI": [[14], [9]],
             "ADX": [[20]],

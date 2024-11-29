@@ -12,11 +12,12 @@ import ta
 
 async def main():
     # INIT CONST
+    symbol = "SUIUSDT"
     bars_count = Bars_Count(
         bars_used=settings_ml["bars_used"], 
         max_period=max(g_not_iter_from_iter(list(settings_ml["feature_used"].values()) + list(settings_filter.values()))), 
     )
-    src = Source(**(await g_klines_split(await g_klines(symbol="SUIUSDT", qty=bars_count.max_bars_back,))))
+    src = Source(**(await g_klines_split(await g_klines(symbol=symbol, qty=bars_count.max_bars_back,))))
     feature_series = Feature_Series(*[np.nan for _ in range(5)])
     feature_arrays = Feature_Arrays(*[pd.Series(np.full(bars_count.max_bars_back, np.nan)) for _ in range(5)])
     label_direction = Label(
@@ -149,8 +150,8 @@ async def main():
             if i % 100 == 0:
                 print(i, bars_count.max_bars_back)
 
-            sma_last_value = g_sma(src_mi_max_period.close, settings_filter["EMA"]).iloc[-1]
-            ema_last_value = g_ema(src_mi_max_period.close, settings_filter["EMA"]).iloc[-1]
+            sma_last_value = g_sma(src_mi_max_period_mu_5.close, settings_filter["EMA"]).iloc[-1]
+            ema_last_value = g_ema(src_mi_max_period_mu_5.close, settings_filter["EMA"]).iloc[-1]
             
             yhat1 = g_rational_quadratic(
                 src=src_mi_max_period.close.to_numpy(),
@@ -186,7 +187,11 @@ async def main():
                         ml.predictions.pop(0)
 
             # default filters
-            # filter.volatility = g_f_volatility(src_mi_max_period)
+            filter.volatility = g_f_volatility(
+                src_mi_max_period.high, 
+                low=src_mi_max_period.low, 
+                close=src_mi_max_period.close,
+            )
             filter.ADX = g_f_adx(latest_adx=feature_series.ADX_1)
             filter.regime = g_f_regime(
                 high=src_mi_max_period_mu_5.high.to_numpy(),
@@ -203,12 +208,15 @@ async def main():
             
             # signal filter l3
             # EMA/SMA
+            last_price = src.close.iloc[i]
             if settings_filter["USE_EMA_f"]:
-                filter.is_EMA_up_trend = src.close[i] > ema_last_value
-                filter.is_EMA_down_trend = src.close[i] < ema_last_value
+                last_ema = g_ema(src.close[index_count.i_mi_max_period_mu_5:], settings_filter["EMA"]).iloc[-1]
+                filter.is_EMA_down_trend =  last_ema < last_price
+                filter.is_EMA_up_trend = last_ema > last_price
             if settings_filter["USE_SMA_f"]:
-                filter.is_SMA_up_trend = src.close[i] > sma_last_value
-                filter.is_SMA_down_trend = src.close[i] < sma_last_value
+                last_sma = g_sma(src.close[index_count.i_mi_max_period_mu_5:], settings_filter["SMA"]).iloc[-1]
+                filter.is_SMA_down_trend = last_sma < last_price
+                filter.is_SMA_up_trend = last_sma > last_price
             
             # Bar Count filters
             if ml.signal != g_iloc(array=ml.signals, start=-1):
@@ -308,10 +316,21 @@ async def main():
             filter.filter_all_default = all((
                 filter.regime, 
                 filter.ADX, 
+                filter.volatility,
                 filter.is_held_n_bars,
             ))
-            filter.is_short = ml.signal == label_direction.short and filter.filter_all_default
-            filter.is_long = ml.signal == label_direction.long and filter.filter_all_default
+            filter.is_short = all((
+                filter.filter_all_default,
+                ml.signal == label_direction.short, 
+                filter.is_EMA_down_trend,
+                filter.is_SMA_down_trend,
+            ))
+            filter.is_long = all((
+                filter.filter_all_default,
+                ml.signal == label_direction.long, 
+                filter.is_EMA_up_trend,
+                filter.is_SMA_up_trend,
+            ))
             # print(filter.is_short, filter.is_held_n_bars, ml.signal, ml.signal == label_direction.short and filter.is_short)
             if filter.is_short or filter.is_long:
                 if filter.is_short:
@@ -329,6 +348,7 @@ async def main():
                     f"FILTERS:\n"
                     f"regime: {filter.regime}\n" 
                     f"adx: {filter.ADX}\n"
+                    f"volatility: {filter.volatility}\n"
                     f"is_held_n_bars: {filter.is_held_n_bars}\n"
                 )
                 print("# ----------- #")
@@ -359,6 +379,8 @@ async def main():
         name="short",
         marker={"color": "red"},
     ))
+    from datetime import datetime
+    fig.write_html(f"plotly_html/{symbol}_bu{settings_ml["bars_used"]}_{datetime.now().strftime('%Y.%m.%d_%H.%M.%S')}.html")
     fig.show()
 
  
@@ -366,28 +388,24 @@ async def pre_main():
     from pprint import pprint
     from time import sleep
     while True:
-        src = Source(**(await g_klines_split(await g_klines(symbol="SUIUSDT", qty=1001,))))
-        feature_series = Feature_Series(
-            ADX_1=ta.trend.ADXIndicator(high=src.high, low=src.low, close=src.close, window=settings_ml["feature_used"]["ADX"][0][0]).adx().iloc[-1],
-            RSI_1=ta.momentum.RSIIndicator(close=src.close, window=settings_ml["feature_used"]["RSI"][0][0]).rsi().iloc[-1],
-            RSI_2=ta.momentum.RSIIndicator(close=src.close, window=settings_ml["feature_used"]["RSI"][1][0]).rsi().iloc[-1],
-            CCI_1=ta.trend.CCIIndicator(high=src.high, low=src.low, close=src.close, window=settings_ml["feature_used"]["CCI"][0][0]).cci().iloc[-1],
-            WT_1=ta.momentum.WilliamsRIndicator(high=src.high, low=src.low, close=src.close,).williams_r().iloc[-1]
+        src = Source(**(await g_klines_split(await g_klines(symbol="SUIUSDT", qty=200*5,))))
+        yhat1 = g_rational_quadratic(
+            src=src.close.to_numpy(),
+            lookback=settings_filter["KERNEL"]["lookback_window"], 
+            relative_weight=settings_filter["KERNEL"]["relative_weight"], 
+            start_at_bar=settings_filter["KERNEL"]["regression_level"],
         )
-        # pprint(vars(feature_series))
+        yhat2 = g_gaussian(
+            src=src.close.to_numpy(),
+            lookback=settings_filter["KERNEL"]["lookback_window"] - settings_filter["KERNEL"]["enhance_smoothing_lag"], 
+            start_at_bar=settings_filter["KERNEL"]["regression_level"],
+        )
         print(
-            # round(
-                g_f_regime(
-                    high=src.high.to_numpy(),
-                    low=src.low.to_numpy(),
-                    ohlc4=(src.close.to_numpy() + src.open.to_numpy() + src.high.to_numpy() + src.low.to_numpy()) / 4,
-                ), 
-            # 4,
+            yhat1,
         )
-        # )
         # sleep(1)
 
 import asyncio
 
-# asyncio.run(pre_main())
-asyncio.run(main())
+asyncio.run(pre_main())
+# asyncio.run(main())
