@@ -252,14 +252,14 @@ def g_sma(data, period):
     return data.rolling(window=period).mean()
 
 def g_rational_quadratic(
-    src, 
+    close, 
     lookback, 
     relative_weight, 
     start_at_bar,
 ):
     """
     PARAMS:
-    src - Series<float> The source series.
+    close - Series<float> The source series.
     lookback - int The period for calculating the RQ.
     relative_weight - float The relative weight for the RQ.
     start_at_bar - int The index of the bar at which to start the calculation.
@@ -268,63 +268,104 @@ def g_rational_quadratic(
     float The RQ estimate.
 
     """
-    current_weight = 0.0
-    cumulative_weight = 0.0
-    size = len(src)
-
-    # Проходим по всем элементам начиная с start_at_bar
-    for i in range(size):
-        if i < start_at_bar:
-            continue  # Пропускаем элементы до start_at_bar
-        
-        y = src[i]
-        # Вычисляем вес w
-        w = (1 + ((i ** 2) / (2 * (lookback ** 2) * relative_weight))) ** (-relative_weight)
-        
-        current_weight += y * w
-        cumulative_weight += w
-
-    # Проверка на ноль для избежания деления на ноль
-    if cumulative_weight == 0:
-        return np.nan  # Или любое другое значение по умолчанию
+    size = len(close)
+    current_weight = 0
+    cumulative_weight = 0
     
-    yhat = current_weight / cumulative_weight
-    return yhat
-
-def g_gaussian(
-    src, 
-    lookback, 
-    start_at_bar
-):
-    """
-    PARAMS:
-    src - Series<float> The source series.
-    lookback - int The period for calculating the Gaussian.
-    start_at_bar - int The index of the bar at which to start the calculation.
-
-    RETURNS:
-    float The Gaussian estimate.
-
-    """
-    current_weight = 0.0
-    cumulative_weight = 0.0
-    size = len(src)
-
-    # Проходим по всем элементам начиная с start_at_bar
-    for i in range(size):
-        if i < start_at_bar:
-            continue  # Пропускаем элементы до start_at_bar
-        
-        y = src[i]
-        # Вычисляем вес w
-        w = np.exp(-((i ** 2) / (2 * (lookback ** 2))))
-        
+    for i in range(start_at_bar, size,):
+        y = close[i]
+        w = (1 + (i ** 2) / (lookback ** 2 * 2 * relative_weight)) ** -relative_weight
+        print(round(w, 4))
         current_weight += y * w
-        cumulative_weight += w
+        # if i == size - 1:
+        #     print(current_weight[i])
+    #     cumulative_weight[i] += w
+    # yhat = current_weight / cumulative_weight
+    # return yhat[-1]
+    return current_weight
 
-    # Проверка на ноль для избежания деления на ноль
-    if cumulative_weight == 0:
-        return np.nan  # Или любое другое значение по умолчанию
+def g_rational_quadratic(close, lookback, relative_weight, start_at_bar):
+    length_of_prices = len(close)
+    result = np.zeros(length_of_prices)
     
-    yhat = current_weight / cumulative_weight
-    return yhat
+    for index in range(length_of_prices):
+        current_weight = 0.0
+        cumulative_weight = 0.0
+        
+        # Итерация по предыдущим барам
+        for i in range(start_at_bar + 1):
+            if index - i < 0:
+                continue  # Пропустить, если индекс выходит за пределы
+            
+            y = close[index - i]
+            w = (1 + (i ** 2) / (lookback ** 2 * 2 * relative_weight)) ** -relative_weight
+            
+            current_weight += y * w
+            cumulative_weight += w
+        
+        # Нормализация результата
+        result[index] = current_weight / cumulative_weight if cumulative_weight != 0 else 0.0
+    
+    return result[-1]
+
+def g_gaussian(close, lookback, start_at_bar):
+    length_of_prices = len(close)
+    result = np.zeros(length_of_prices)  # Массив для хранения результатов
+
+    for index in range(length_of_prices):
+        current_weight = 0.0
+        cumulative_weight = 0.0
+        
+        # Итерация по предыдущим барам
+        for i in range(start_at_bar + 1):
+            if index - i < 0:
+                continue  # Пропустить, если индекс выходит за пределы
+            
+            y = close[index - i]
+            w = np.exp(-((i ** 2) / (2 * (lookback ** 2))))  # Вычисление веса
+            
+            current_weight += y * w
+            cumulative_weight += w
+        
+        # Нормализация результата
+        result[index] = current_weight / cumulative_weight if cumulative_weight != 0 else 0.0
+    
+    return result[-1]
+
+# def g_gaussian(
+#     close, 
+#     lookback, 
+#     start_at_bar
+# ):
+#     """
+#     PARAMS:
+#     close - Series<float> The source series.
+#     lookback - int The period for calculating the Gaussian.
+#     start_at_bar - int The index of the bar at which to start the calculation.
+
+#     RETURNS:
+#     float The Gaussian estimate.
+
+#     """
+#     current_weight = 0.0
+#     cumulative_weight = 0.0
+#     size = len(close)
+
+#     # Проходим по всем элементам начиная с start_at_bar
+#     for i in range(size):
+#         if i < start_at_bar:
+#             continue  # Пропускаем элементы до start_at_bar
+        
+#         y = close[i]
+#         # Вычисляем вес w
+#         w = np.exp(-((i ** 2) / (2 * (lookback ** 2))))
+        
+#         current_weight += y * w
+#         cumulative_weight += w
+
+#     # Проверка на ноль для избежания деления на ноль
+#     if cumulative_weight == 0:
+#         return np.nan  # Или любое другое значение по умолчанию
+    
+#     yhat = current_weight / cumulative_weight
+#     return yhat

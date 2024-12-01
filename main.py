@@ -247,8 +247,8 @@ async def main():
             filter.is_new_sell_signal = filter.is_sell_signal and filter.is_different_signal_type
 
             # Kernel Rates of Change
-            filter.was_bearish_rate = g_all_conditions(g_iloc(array=ml.yhat1s, start=-3) > g_iloc(array=ml.yhat2s, start=-2))
-            filter.was_bullish_rate = g_all_conditions(g_iloc(array=ml.yhat1s, start=-3) < g_iloc(array=ml.yhat2s, start=-2))
+            filter.was_bearish_rate = g_all_conditions(g_iloc(array=ml.yhat1s, start=-2) > g_iloc(array=ml.yhat2s, start=-1))
+            filter.was_bullish_rate = g_all_conditions(g_iloc(array=ml.yhat1s, start=-2) < g_iloc(array=ml.yhat2s, start=-1))
             filter.is_bearish_rate = g_all_conditions(g_iloc(array=ml.yhat1s, start=-1) > g_iloc(array=ml.yhat2s, start=-2))
             filter.is_bullish_rate = g_all_conditions(g_iloc(array=ml.yhat1s, start=-1) < g_iloc(array=ml.yhat2s, start=-2))
             filter.is_bearish_change = filter.is_bearish_rate and filter.was_bullish_rate
@@ -256,8 +256,8 @@ async def main():
             # Kernel Crossovers
             filter.is_bullish_cross_alert = g_crossover(ml.yhat2s, ml.yhat1s)
             filter.is_bearish_cross_alert = g_crossunder(ml.yhat1s, ml.yhat2s)
-            filter.is_bullish_smooth = g_iloc(array=ml.yhat1s, start=-1) >= g_iloc(array=ml.yhat2s, start=-1)
-            filter.is_bearish_smooth = g_iloc(array=ml.yhat1s, start=-1) <= g_iloc(array=ml.yhat2s, start=-1)
+            filter.is_bullish_smooth = yhat2 >= yhat1
+            filter.is_bearish_smooth = yhat2 <= yhat1
             # Alert Variables
             filter.alert_bullish = filter.is_bullish_cross_alert if settings_filter["KERNEL"]["USE_enhance_smoothing_lag"] else filter.is_bullish_change
             filter.alert_bearish = filter.is_bearish_cross_alert if settings_filter["KERNEL"]["USE_enhance_smoothing_lag"] else filter.is_bearish_change
@@ -390,20 +390,54 @@ async def pre_main():
     while True:
         src = Source(**(await g_klines_split(await g_klines(symbol="SUIUSDT", qty=200*5,))))
         yhat1 = g_rational_quadratic(
-            src=src.close.to_numpy(),
+            close=src.close.to_numpy(),
             lookback=settings_filter["KERNEL"]["lookback_window"], 
             relative_weight=settings_filter["KERNEL"]["relative_weight"], 
             start_at_bar=settings_filter["KERNEL"]["regression_level"],
         )
+        # print(yhat1)
         yhat2 = g_gaussian(
-            src=src.close.to_numpy(),
+            close=src.close.to_numpy(),
             lookback=settings_filter["KERNEL"]["lookback_window"] - settings_filter["KERNEL"]["enhance_smoothing_lag"], 
             start_at_bar=settings_filter["KERNEL"]["regression_level"],
         )
+        yhat1s = []
+        yhat2s = []
+        was_bearish_rate = g_all_conditions(g_iloc(array=yhat1s, start=-2) > g_iloc(array=yhat2s, start=-1))
+        was_bullish_rate = g_all_conditions(g_iloc(array=yhat1s, start=-2) < g_iloc(array=yhat2s, start=-1))
+        is_bearish_rate = g_all_conditions(g_iloc(array=yhat1s, start=-1) > g_iloc(array=yhat2s, start=-2))
+        is_bullish_rate = g_all_conditions(g_iloc(array=yhat1s, start=-1) < g_iloc(array=yhat2s, start=-2))
+        is_bearish_change = is_bearish_rate and was_bullish_rate
+        is_bullish_change = is_bullish_rate and was_bearish_rate
+        # Kernel Crossovers
+        is_bullish_cross_alert = g_crossover(yhat2s, yhat1s)
+        is_bearish_cross_alert = g_crossunder(yhat1s, yhat2s)
+        is_bullish_smooth = yhat2 >= yhat1
+        is_bearish_smooth = yhat2 <= yhat1
+        # Alert Variables
+        alert_bullish = is_bullish_cross_alert if settings_filter["KERNEL"]["USE_enhance_smoothing_lag"] else is_bullish_change
+        alert_bearish = is_bearish_cross_alert if settings_filter["KERNEL"]["USE_enhance_smoothing_lag"] else is_bearish_change
+        # i_alert_bullish = i if alert_bullish else np.nan
+        # i_alert_bearish = i if alert_bearish else np.nan
+
+        # Bullish and Bearish Filters based on Kernel
+        is_bullish = (is_bullish_smooth if settings_filter["KERNEL"]["USE_enhance_smoothing_lag"] else is_bullish_rate) if settings_filter["KERNEL"]["USE_KERNEL_f"] else True
+        is_bearish = (is_bearish_smooth if settings_filter["KERNEL"]["USE_enhance_smoothing_lag"] else is_bearish_rate) if settings_filter["KERNEL"]["USE_KERNEL_f"] else True
+        
+        # <appends>
+        yhat1s.append(yhat1)
+        yhat2s.append(yhat2)
+        if len(yhat1s) > settings_ml["max_bars_held"]:
+            yhat1s.pop(0)
+            yhat2s.pop(0)
         print(
-            yhat1,
+            src.close.iloc[-1],
+            # yhat1,
+            # round(yhat2[-1], 4)
+            is_bearish,
+            is_bullish,
         )
-        # sleep(1)
+        sleep(0.3)
 
 import asyncio
 
