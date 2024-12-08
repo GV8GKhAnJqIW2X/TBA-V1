@@ -21,8 +21,8 @@ async def main():
     ))))
     close_backtest = src["close"][-settings["BACKTEST"]["klines_test"]:]
     signals = np.empty(settings["BACKTEST"]["klines_test"])
-    x_features_series_array = np.full((settings["BACKTEST"]["klines_test"], settings["SIGNAL_GENERATION"]["features_used_count"]), {})
     signals_raw_array = np.full(settings["BACKTEST"]["klines_test"], np.nan)
+    x_features_series_array = np.full(settings["BACKTEST"]["klines_test"], {})
     filters_values_array = np.full(settings["BACKTEST"]["klines_test"], {})
     balances_array = np.full(settings["BACKTEST"]["klines_test"], np.nan)
     signal_return_value = None
