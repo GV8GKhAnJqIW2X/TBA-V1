@@ -8,7 +8,7 @@ with open("settings__.json", "r", encoding="utf-8") as f:
         "settings_target": "user",
         "BACKTEST": {
             "USE_dynamic_exits": False,
-            "klines_test":  500,
+            "klines_test":  200000,
             "sl": -1,
             "tp": 0.02,
             "leverage": 10,
@@ -39,15 +39,15 @@ with open("settings__.json", "r", encoding="utf-8") as f:
                     "zeros_skip_held_threshold": 1
                 },
                 "volatility": {
-                    "min_len": 1,
-                    "max_len": 10
+                    "min_length": 1,
+                    "max_length": 10
                 },
                 "regime": {"threshold": 1},
                 "ADX": {"threshold": 25},
                 "EMA": {"window": 200},
                 "SMA": {"window": 200}
             }
-        }   
+        }
     }
     if settings["settings_target"].lower().strip() != "user":
         settings = settings_default

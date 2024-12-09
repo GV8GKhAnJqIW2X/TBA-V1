@@ -1,4 +1,4 @@
-from onion.l1.l1.settings_ import *
+from onion.l1.l1.g_settings_ import *
 from onion.l1.l1.g_indicators import *
 from onion.l1.l1.g_transform import *
 from onion.l1.l1.g_choices import *

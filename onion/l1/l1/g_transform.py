@@ -1,6 +1,6 @@
 import numpy as np
 
-from onion.l1.l1.settings_ import settings
+from onion.l1.l1.g_settings_ import settings
 
 def g_f_ema(
     ema_value,

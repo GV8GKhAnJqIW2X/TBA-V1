@@ -1,4 +1,4 @@
-from onion.l1.l1.settings_ import *
+from onion.l1.l1.g_settings_ import *
 
 import numpy as np
 import pandas as pd

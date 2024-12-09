@@ -2,7 +2,7 @@
     "settings_target": "user",
     "BACKTEST": {
         "USE_dynamic_exits": false,
-        "klines_test":  50000,
+        "klines_test":  200000,
         "sl": -1,
         "tp": 0.02,
         "leverage": 10,
