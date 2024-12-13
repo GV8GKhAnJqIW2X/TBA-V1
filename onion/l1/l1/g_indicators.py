@@ -1,15 +1,17 @@
 from onion.l1.l1.g_settings_ import *
+from project_exctentions.g_utils_ml import *
 
 import numpy as np
 import pandas as pd
 import ta
+from finta import TA
 
 def g_signals_held(
     signal_raw,
     last_signal_raw,
     signals_held_counter,
     zeros_skip_counter,
-    zeros_skip_held_threshold=settings["SIGNAL_GENERATION"]["filters_used"]["signals_held"]["zeros_skip_held_threshold"],
+    zeros_skip_held_threshold=None,
     check_params=True,
 ):
     # check params
@@ -45,7 +47,7 @@ def g_signals_held(
 
     return signals_held_counter, zeros_skip_counter
 
-def g_ema(data, window=settings["SIGNAL_GENERATION"]["filters_used"]["EMA"]["window"]):
+def g_ema(data, window=None):
     """
     PARAMS:
     data - DataFrame<float> The source series.
@@ -62,7 +64,7 @@ def g_ema(data, window=settings["SIGNAL_GENERATION"]["filters_used"]["EMA"]["win
 
 def g_sma(
     data, 
-    window=settings["SIGNAL_GENERATION"]["filters_used"]["SMA"]["window"],
+    window=None,
     check_params=True,
 ):
     # check params
@@ -195,3 +197,36 @@ def g_gaussian(close, lookback, start_at_bar):
         result[index] = current_weight / cumulative_weight if cumulative_weight != 0 else 0.0
     
     return result[-1]
+
+def g_wt_A_iter(
+    open,
+    high,
+    low,
+    close,
+    channel_lenght,
+    average_lenght,
+    check_args=True,
+):
+    # check args
+    if check_args:
+        if not isinstance(channel_lenght, int):
+            raise ValueError("channel_lenght must be an integer")
+        if not isinstance(average_lenght, int):
+            raise ValueError("average_lenght must be an integer")
+    
+    # main
+    wt1_wt2 = TA.WTO(
+        pd.DataFrame(dict(
+            open=open, 
+            high=high, 
+            low=low, 
+            close=close,
+        )),
+        channel_lenght,
+        average_lenght,
+    )
+    return g_normalize(
+        wt1_wt2["WT1."] - wt1_wt2["WT2."],
+        0, 
+        1,
+    ).iloc[-1]

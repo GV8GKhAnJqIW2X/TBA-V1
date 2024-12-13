@@ -12,7 +12,7 @@ async def g_klines_split(klines):
 
 def g_not_iter_from_iter(iter_, ignore_str=False):
     if len(iter_) == 0:
-        return 0
+        return [0]
     
     iter_ = iter_.values() if isinstance(iter_, dict) else iter_
     not_iter = []
@@ -76,3 +76,37 @@ def g_number_need_to_filled(
         return np.isnan(array).sum()
     elif empty_is_zero:
         return np.count_nonzero(array)
+    
+def g_split_AS_bool_array_AS_indcs(
+    arr,
+    check_args=True,
+):
+    # check args
+    if check_args:
+        try:
+            len(arr)
+        except:
+            raise ValueError("The array is not method length")
+    
+    # init
+    lst = []
+    num1 = 0
+    bool_ = False
+
+    # main
+    for i, el in enumerate(arr):
+        if el:
+            if not bool_ and i == len(arr) - 1:
+                num1 = i
+                lst.append(np.arange(i, i + 1))
+            elif not bool_:
+                bool_ = True
+                num1 = i
+            elif bool_ and i == len(arr) - 1:
+                lst.append(np.arange(i, i + 1))
+        else:
+            if bool_:
+                bool_ = False
+                lst.append(np.arange(num1, i))
+        
+    return lst

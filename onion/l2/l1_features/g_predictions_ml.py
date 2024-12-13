@@ -12,7 +12,7 @@ def g_lorentzian_prediction(
     distances = []
     last_distance = -1.0
     for i in range(klines_train):
-        distance = g_lorentzian_distance(i, x_features_series, x_train_arrays,)
+        distance = g_lorentzian_distance_A_series_array(i, x_features_series, x_train_arrays,)
         if distance >= last_distance and i % klines_train_held == 0:
             last_distance = distance
             distances.append(distance)

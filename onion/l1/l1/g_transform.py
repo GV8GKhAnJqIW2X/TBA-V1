@@ -45,6 +45,13 @@ def g_f_sma(
 def g_f_signals_held(
     signals_held_counter,
     held_threshold=settings["SIGNAL_GENERATION"]["filters_used"]["signals_held"]["held_threshold"],
+    use_ema_f=True,
+    use_sma_f=True,
+    ema_value=None,
+    sma_value=None,
+    last_price=None,
+    short=False,
+    long=False,
     check_params=True,
 ):
     # check params
@@ -53,7 +60,12 @@ def g_f_signals_held(
             raise ValueError("signals_held_counter must be an integer")
     
     # main
-    return signals_held_counter >= held_threshold
+    add_f = [True,]
+    if use_ema_f:
+        add_f.append(g_f_ema(ema_value, last_price, short, long,))
+    if use_sma_f:
+        add_f.append(g_f_sma(sma_value, last_price, short, long,))
+    return signals_held_counter == held_threshold and all(add_f)
 
 def g_f_adx(
     latest_adx, 

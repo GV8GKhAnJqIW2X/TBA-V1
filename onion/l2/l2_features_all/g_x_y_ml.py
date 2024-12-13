@@ -1,6 +1,6 @@
 from project_exctentions.g_utils import *
 from onion.l1.l2.g_structures import *
-from onion.l2.l1.g_y_ml import *
+from onion.l2.l1_features.g_y_ml import *
 
 import pandas as pd
 
@@ -15,6 +15,7 @@ def g_x_y_arrays_partial_filling_A_comparison_A_klines_train_held(
     klines_train_held,
     max_window_features,
     features_used,
+    tp_train=settings["SIGNAL_GENERATION"]["ML"]["tp_train"],
     USE_shift_filling=False,
     USE_ready_made_series=False,
     ready_made_series=None,
@@ -45,7 +46,7 @@ def g_x_y_arrays_partial_filling_A_comparison_A_klines_train_held(
             raise ValueError("Max window features is not int")
         
         ## additional check
-        if len(open) < klines_train + max_window_features * 2 + 1:
+        if len(open) < klines_train + max_window_features * 5 + 1:
             raise ValueError("There are not enough values to generate x_train_arrays")
     
     # init
@@ -65,15 +66,16 @@ def g_x_y_arrays_partial_filling_A_comparison_A_klines_train_held(
         if i < klines_train - number_need_to_filled:
             continue
 
-        i_src = i + max_window_features * 2 + 1
+        i_src = i + max_window_features * 5 + 1
         y_train_array_fill_target[i] = g_y_train_signal_A_comparison_A_klines_train_held(
             last_price=close[i_src],
             last_price_MI_klines_train_held=close[i_src - klines_train_held],
+            tp_train=tp_train,
         )
         x_features_series = ready_made_series
         if not USE_ready_made_series:
             x_features_series = g_x_features_series(
-                *g_iloc((high, low, close), slice(i, i_src)),
+                *g_iloc((open, high, low, close), slice(i, i_src)),
                 features_used=features_used,
             )
         for key in features_used:

@@ -2,18 +2,22 @@ from onion.l1.l1.g_indicators import *
 from onion.l1.l1.g_transform import *
 
 import ta
+import pandas_ta
 
 def g_features_series_choice(
+    open,
     high, 
     low, 
     close,
 ):
     return {
-        "ADX": lambda params: ta\
-            .trend\
-            .ADXIndicator(high=high, low=low, close=close, **params)\
-            .adx()\
-            .iloc[-1],
+        "ADX": lambda params: pandas_ta.\
+            adx(
+                high,
+                low,
+                close,
+                **params
+            )[f"ADX_{params["length"]}"].iloc[-1],
         "CCI": lambda params: ta.\
             trend.\
             CCIIndicator(high=high, low=low, close=close, **params).\
@@ -24,11 +28,13 @@ def g_features_series_choice(
             RSIIndicator(close=close, **params).\
             rsi()\
             .iloc[-1],
-        "WT": lambda params: ta.\
-            momentum.\
-            WilliamsRIndicator(high=high, low=low, close=close).\
-            williams_r()\
-            .iloc[-1],
+        "WT": lambda params: g_wt_A_iter(
+            open,
+            high,
+            low,
+            close,
+            **params
+        )
     }
 
 def g_filters_values_choice(
@@ -79,6 +85,8 @@ def g_filters_values_choice(
 def g_filters_choice(
     filters_values,
     last_price,
+    signal,
+    signal_last,
     short=False,
     long=False,
 ):
@@ -86,6 +94,13 @@ def g_filters_choice(
         "signals_held": lambda params: g_f_signals_held(
             filters_values["signals_held"][0], 
             params["held_threshold"],
+            use_ema_f=params["use_ema_f"],
+            use_sma_f=params["use_sma_f"],
+            ema_value=filters_values["EMA"],
+            sma_value=filters_values["SMA"],
+            last_price=last_price,
+            short=short,
+            long=long,
         ),
         "ADX": lambda params: g_f_adx(
             filters_values["ADX"], 
@@ -110,4 +125,5 @@ def g_filters_choice(
             short=short, 
             long=long,
         ),
+        "is_different": lambda params: signal != signal_last,
     }
