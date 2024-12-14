@@ -44,7 +44,7 @@ def g_f_sma(
 
 def g_f_signals_held(
     signals_held_counter,
-    held_threshold=settings["SIGNAL_GENERATION"]["filters_used"]["signals_held"]["held_threshold"],
+    held_threshold=settings["FILTERS"]["signals_held"]["held_threshold"],
     use_ema_f=True,
     use_sma_f=True,
     ema_value=None,
@@ -69,7 +69,7 @@ def g_f_signals_held(
 
 def g_f_adx(
     latest_adx, 
-    adx_threshold=settings["SIGNAL_GENERATION"]["filters_used"]["ADX"]["threshold"], 
+    adx_threshold=settings["FILTERS"]["ADX"]["threshold1"], 
     check_params=True,
 ):
     # check params

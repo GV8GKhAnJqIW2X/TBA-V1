@@ -4,70 +4,79 @@
         "klines_test": 200000,
         "balance_usd": 300,
         "leverage": 10,
-        "module_can_used": {
-            "avg": {
-                "avg_power": 1
+        "avg": {
+            "avg_multilple_my_side": 0.65,
+            "avg_multilple_no_my_side": 0.5
+        },
+        "qty_balance_used_open": 0.02,
+        "tp_pos": 0.17,
+        "sl_balance": -0.2,
+        "USE_sl": true,
+        "USE_tp": true,
+        "use_avg": true,
+        "tax_exchange": 0.001
+    },
+    "ML": {
+        "neighbors_count": 8,
+        "klines_train": 2000,
+        "klines_train_held": 4,
+        "tp_train": 0.0,
+        "features": {
+            "RSI_1": {
+                "window": 14,
+                "USE": true
             },
-            "sl": {
-                "pnl_threshold": -1,
-                "qty_from_balance_threshold_percent": 0.03
+            "RSI_2": {
+                "window": 9,
+                "USE": true
             },
-            "tp": {
-                "pnl_threshold": 0.2
+            "ADX_1": {
+                "length": 20,
+                "lensig": 20,
+                "USE": true
             },
-            "open": {
-                "qty_from_balance_percent": 0.05
+            "CCI_1": {
+                "window": 20,
+                "USE": true
+            },
+            "WT_1": {
+                "channel_lenght": 10, 
+                "average_lenght": 11,
+                "USE": true
             }
-
         }
     },
-    "SIGNAL_GENERATION": {
-        "ML": {
-            "neighbors_count": 8,
-            "klines_train": 2000,
-            "klines_train_held": 4,
-            "tp_train": 0.0,
-            "features_used": {
-                "RSI_1": {
-                    "window": 14,
-                    "USE": true
-                },
-                "RSI_2": {
-                    "window": 9,
-                    "USE": true
-                },
-                "ADX_1": {
-                    "length": 20,
-                    "lensig": 20,
-                    "USE": true
-                },
-                "CCI_1": {
-                    "window": 20,
-                    "USE": true
-                },
-                "WT_1": {
-                    "channel_lenght": 10, 
-                    "average_lenght": 11,
-                    "USE": true
-                }
-            }
+    "FILTERS": {
+        "signals_held": {
+            "held_threshold": 4,
+            "zeros_skip": true,
+            "zeros_skip_held_threshold": 0,
+            "use_ema_f": false,
+            "use_sma_f": false,
+            "USE": true
         },
-        "filters_used": {
-            "signals_held": {
-                "held_threshold": 4,
-                "zeros_skip": true,
-                "zeros_skip_held_threshold": 0,
-                "use_ema_f": false,
-                "use_sma_f": false
-            },
-            "volatility": {
-                "min_length": 1,
-                "max_length": 10
-            },
-            "regime": {"threshold": 0},
-            "ADX": {"threshold": 0},
-            "EMA": {"window": 200},
-            "SMA": {"window": 200}
+        "volatility": {
+            "min_length": 1,
+            "max_length": 10,
+            "USE": true
+        },
+        "regime": {
+            "threshold1": 2,
+            "threshold2": 1.3,
+            "USE": true
+        },
+        "ADX": {
+            "threshold1": 25,
+            "threshold2": 25,
+            "USE": true
+        },
+        "EMA": {
+            "window": 200,
+            "USE": true
+        },
+        "SMA": {
+            "window": 200,
+            "USE": true
         }
     }
 

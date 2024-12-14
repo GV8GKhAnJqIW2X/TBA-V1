@@ -22,13 +22,13 @@ def g_signal_A_distance_lorentzian_A_ANN_A_iter(
     low,
     close,
     initialized_return_value,  
-    klines_train=settings["SIGNAL_GENERATION"]["ML"]["klines_train"], 
-    klines_train_held=settings["SIGNAL_GENERATION"]["ML"]["klines_train_held"],
-    max_window_features=settings["SIGNAL_GENERATION"]["max_window_features"],
-    max_window_filters=settings["SIGNAL_GENERATION"]["max_window_filters"],
-    features_used: dict = settings["SIGNAL_GENERATION"]["ML"]["features_used"],
-    filters_used: dict = settings["SIGNAL_GENERATION"]["filters_used"],
-    neighbors_count=settings["SIGNAL_GENERATION"]["ML"]["neighbors_count"],
+    klines_train=settings["ML"]["klines_train"], 
+    klines_train_held=settings["ML"]["klines_train_held"],
+    max_window_features=settings["max_window_features"],
+    max_window_filters=settings["max_window_filters"],
+    features_used: dict = settings["ML"]["features"],
+    filters_used: dict = settings["FILTERS"],
+    neighbors_count=settings["ML"]["neighbors_count"],
     additional_return_x_features_series=True,
     additional_return_signal_raw=True,
     additional_return_filters_values=True,
@@ -249,8 +249,8 @@ def g_signal_A_ready_made_data(
         )
         all_2.append(vol_signal_f)
 
-        all_.append(g_f_regime(filters_values["regime"], 2))
-        all_2.append(g_f_regime(filters_values["regime"], 1.3))
+        all_.append(g_f_regime(filters_values["regime"], settings["FILTERS"]["regime"]["threshold1"]))
+        all_2.append(g_f_regime(filters_values["regime"], settings["FILTERS"]["regime"]["threshold2"]))
 
         short = True if signal_raw == -1 else False
         long = True if signal_raw == 1 else False
@@ -264,8 +264,8 @@ def g_signal_A_ready_made_data(
         all_.append(g_f_sma(filters_values["SMA"], last_price,short, long))
         all_2.append(g_f_sma(filters_values["SMA"], last_price,short, long))
         
-        all_.append(g_f_adx(filters_values["ADX"], 25))
-        all_2.append(g_f_adx(filters_values["ADX"], 25))
+        all_.append(g_f_adx(filters_values["ADX"], settings["FILTERS"]["ADX"]["threshold1"]))
+        all_2.append(g_f_adx(filters_values["ADX"], settings["FILTERS"]["ADX"]["threshold2"]))
         
         if all(all_):
             signal = signal_raw
@@ -280,12 +280,12 @@ def g_signal_raw_A_distance_lorentzian_A_ANN_A_iter(
     low,
     close,
     initialized_return_value,  
-    klines_train=settings["SIGNAL_GENERATION"]["ML"]["klines_train"], 
-    klines_train_held=settings["SIGNAL_GENERATION"]["ML"]["klines_train_held"],
-    features_used: dict = settings["SIGNAL_GENERATION"]["ML"]["features_used"],
-    max_window_features=settings["SIGNAL_GENERATION"]["max_window_features"],
-    neighbors_count=settings["SIGNAL_GENERATION"]["ML"]["neighbors_count"],
-    tp_train=settings["SIGNAL_GENERATION"]["ML"]["tp_train"],
+    klines_train=settings["ML"]["klines_train"], 
+    klines_train_held=settings["ML"]["klines_train_held"],
+    features_used: dict = settings["ML"]["features"],
+    max_window_features=settings["max_window_features"],
+    neighbors_count=settings["ML"]["neighbors_count"],
+    tp_train=settings["ML"]["tp_train"],
     additional_return_x_features_series=True,
     check_args=True,   
 ):

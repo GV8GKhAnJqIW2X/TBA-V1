@@ -6,10 +6,10 @@ def g_backtest_AS_balance_A_single_A_iter(
     price_last,
     return_values,
     leverage=settings["BACKTEST"]["leverage"],
-    tp=settings["BACKTEST"]["module_can_used"]["tp"],
-    sl=settings["BACKTEST"]["module_can_used"]["sl"],
-    open=settings["BACKTEST"]["module_can_used"]["open"],
-    avg_power=settings["BACKTEST"]["module_can_used"]["avg"]["avg_power"],
+    tp=settings["BACKTEST"]["tp_pos"],
+    sl=settings["BACKTEST"]["sl_balance"],
+    open=None,
+    avg_power=settings["BACKTEST"]["avg"]["avg_multilple_my_side"],
     check_args=True,
 ):
     # check args
@@ -108,11 +108,12 @@ def g_backtest_AS_balance_A_comparison_A_single_A_iter(
     signal2,
     price_last,
     leverage=settings["BACKTEST"]["leverage"],
-    qty_balance_used_open=0.01,
-    tp_pos=0.17,
-    sl_balance = -0.2,
-    avg_multilple_my_side = 2,
-    avg_multilple_no_my_side = 0.5,
+    qty_balance_used_open=settings["BACKTEST"]["qty_balance_used_open"],
+    tp_pos=settings["BACKTEST"]["tp_pos"],
+    sl_balance = settings["BACKTEST"]["sl_balance"],
+    avg_multilple_my_side = settings["BACKTEST"]["avg"]["avg_multilple_my_side"],
+    avg_multilple_no_my_side = settings["BACKTEST"]["avg"]["avg_multilple_no_my_side"],
+    tax_exchange=settings["BACKTEST"]["tax_exchange"],
     check_args=True,
 ):
     # check args
@@ -146,13 +147,20 @@ def g_backtest_AS_balance_A_comparison_A_single_A_iter(
     if in_position:
         pnl_unrealized_AS_prcnt = (price_last / price_pos - 1) * signal_pos * leverage
         pnl_unrealized_AS_qty = pnl_unrealized_AS_prcnt * qty
+        # if 16000 < i < 17000:
+        #     print(
+        #         i, 
+        #         round(pnl_unrealized_AS_prcnt, 2), 
+        #         round(pnl_unrealized_AS_qty, 2), 
+        #         sep=" | ",
+        #     )
 
         # sl/tp
         if (
             pnl_unrealized_AS_qty <= balance * sl_balance
             or pnl_unrealized_AS_prcnt >= tp_pos
         ):
-            return closed_return_values(balance + pnl_unrealized_AS_qty)
+            return closed_return_values(balance + pnl_unrealized_AS_qty - qty * tax_exchange * leverage)
         elif signal2:
             return g_avg(
                 pnl_unrealized_AS_qty,
@@ -166,6 +174,7 @@ def g_backtest_AS_balance_A_comparison_A_single_A_iter(
                 signal_pos,
                 qty,
                 balance,    
+                tax_exchange * leverage,
             )
     elif signal:
         return (

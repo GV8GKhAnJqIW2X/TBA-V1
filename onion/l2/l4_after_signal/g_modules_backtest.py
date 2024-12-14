@@ -7,7 +7,7 @@ def g_sl(
     leverage,
     price_pos,
     pnl_percent,
-    qty_from_balance_threshold_percent=settings["BACKTEST"]["module_can_used"]["sl"]["qty_from_balance_threshold_percent"],
+    qty_from_balance_threshold_percent=None,
     check_args=True,
 ):
     # check args
@@ -106,6 +106,7 @@ def g_avg(
     signal_pos,
     qty,
     balance,
+    tax_exchange,
     check_args=True,
 ):
     # check args
@@ -116,7 +117,7 @@ def g_avg(
     qty_new_order = (
         abs(
             pnl_unrealized_AS_qty 
-            * (avg_multiplier_no_my_side if pnl_unrealized_AS_qty < 0 else avg_multiplier_my_side)
+            * (avg_multiplier_no_my_side if pnl_unrealized_AS_qty < 0 and signal != signal_pos else avg_multiplier_my_side)
         )
         * (-1 if signal != signal_pos else 1)
 
@@ -135,7 +136,7 @@ def g_avg(
             0,
             0,
             0,
-            balance - qty,
+            balance - qty - qty * tax_exchange,
         )
 
     return (
@@ -143,6 +144,7 @@ def g_avg(
         price_pos,
         signal_pos,
         qty_new,
-        balance - (qty_new_order * pnl_unrealized_AS_prcnt if qty_new_order < 0 else 0),
+        balance - (qty_new_order * pnl_unrealized_AS_prcnt if qty_new_order < 0 else 0)\
+        + (qty_new_order * tax_exchange if qty_new_order < 0 else 0),
     )
    

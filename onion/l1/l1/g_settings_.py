@@ -52,7 +52,7 @@ with open("settings__.json", "r", encoding="utf-8") as f:
     if settings["settings_target"].lower().strip() != "user":
         settings = settings_default
     
-    settings["SIGNAL_GENERATION"]["max_window_features"] = max(g_not_iter_from_iter(settings["SIGNAL_GENERATION"]["ML"]["features_used"]))
-    settings["SIGNAL_GENERATION"]["max_window_filters"] = max(g_not_iter_from_iter(settings["SIGNAL_GENERATION"]["filters_used"]))
-    settings["SIGNAL_GENERATION"]["features_used_count"] = len(settings["SIGNAL_GENERATION"]["ML"]["features_used"])
-    settings["SIGNAL_GENERATION"]["filters_used_count"] = len(settings["SIGNAL_GENERATION"]["filters_used"])
+    settings["max_window_features"] = max(g_not_iter_from_iter(settings["ML"]["features"]))
+    settings["max_window_filters"] = max(g_not_iter_from_iter(settings["FILTERS"]))
+    settings["features_used_count"] = len(settings["ML"]["features"])
+    settings["filters_used_count"] = len(settings["FILTERS"])

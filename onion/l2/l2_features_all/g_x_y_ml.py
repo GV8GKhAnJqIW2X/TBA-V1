@@ -15,7 +15,7 @@ def g_x_y_arrays_partial_filling_A_comparison_A_klines_train_held(
     klines_train_held,
     max_window_features,
     features_used,
-    tp_train=settings["SIGNAL_GENERATION"]["ML"]["tp_train"],
+    tp_train=settings["ML"]["tp_train"],
     USE_shift_filling=False,
     USE_ready_made_series=False,
     ready_made_series=None,

@@ -147,7 +147,7 @@ def g_filters(
     }
 
 def g_features_series_empty(
-    features_used_keys=settings["SIGNAL_GENERATION"]["ML"]["features_used"].keys()
+    features_used_keys=settings["ML"]["features"].keys()
 ):
     return {
         key: np.nan
@@ -155,8 +155,8 @@ def g_features_series_empty(
     }
 
 def g_x_train_arrays_empty(
-    klines_train=settings["SIGNAL_GENERATION"]["ML"]["klines_train"],
-    features_used_keys=settings["SIGNAL_GENERATION"]["ML"]["features_used"].keys(),
+    klines_train=settings["ML"]["klines_train"],
+    features_used_keys=settings["ML"]["features"].keys(),
 ):
     return {
         key: np.full(klines_train, np.nan)

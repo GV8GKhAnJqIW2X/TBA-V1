@@ -3,7 +3,7 @@ from onion.l1.l1.g_settings_ import *
 def g_y_train_signal_A_comparison_A_klines_train_held(
     last_price,
     last_price_MI_klines_train_held,
-    tp_train=settings["SIGNAL_GENERATION"]["ML"]["tp_train"],
+    tp_train=settings["ML"]["tp_train"],
     check_params=True,
 ):
     """

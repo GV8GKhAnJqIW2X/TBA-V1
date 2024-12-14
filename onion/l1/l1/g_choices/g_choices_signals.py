@@ -16,16 +16,25 @@ def g_features_series_choice(
                 high,
                 low,
                 close,
-                **params
+                length=params["length"],
+                lensig=params["lensig"],
             )[f"ADX_{params["length"]}"].iloc[-1],
         "CCI": lambda params: ta.\
             trend.\
-            CCIIndicator(high=high, low=low, close=close, **params).\
+            CCIIndicator(
+                high=high,
+                low=low, 
+                close=close, 
+                window=params["window"]
+            ).\
             cci()\
             .iloc[-1],
         "RSI": lambda params: ta.\
             momentum.\
-            RSIIndicator(close=close, **params).\
+            RSIIndicator(
+                close=close,
+                window=params["window"],
+            ).\
             rsi()\
             .iloc[-1],
         "WT": lambda params: g_wt_A_iter(
@@ -33,7 +42,8 @@ def g_features_series_choice(
             high,
             low,
             close,
-            **params
+            channel_lenght=params["channel_lenght"],
+            average_lenght=params["average_lenght"],
         )
     }
 
@@ -64,7 +74,8 @@ def g_filters_values_choice(
             high_max_window_filters,
             low_max_window_filters,
             close_max_window_filters,
-            **params,
+            min_length=params["min_length"],
+            max_length=params["max_length"],
         ),
         "regime": lambda params: g_regime(
             open_max_window_filters_MU_5,
@@ -74,11 +85,11 @@ def g_filters_values_choice(
         ),
         "EMA": lambda params: g_ema(
             close_max_window_filters_MU_5,
-            **params
+            window=params["window"],
         ).iloc[-1],
         "SMA": lambda params: g_sma(
             close_max_window_filters_MU_5,
-            **params
+            window=params["window"],
         ).iloc[-1],
     }
 
@@ -104,14 +115,14 @@ def g_filters_choice(
         ),
         "ADX": lambda params: g_f_adx(
             filters_values["ADX"], 
-            params["threshold"],
+            params["threshold1"],
         ),
         "volatility": lambda params: g_f_volatility(
             *filters_values["volatility"], 
         ),
         "regime": lambda params: g_f_regime(
             filters_values["regime"], 
-            **params,
+            threshold=params["threshold1"],
         ),
         "EMA": lambda params: g_f_ema(
             filters_values["EMA"], 
